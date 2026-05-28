@@ -27,31 +27,35 @@ public final class BastionStructureHelper {
     public static boolean isPlayerInsideBastion(PlayerEntity player, ServerWorld world) {
         if (player == null || world == null) return false;
 
-        BlockPos playerPos = player.getBlockPos();
+        ChunkPos chunkPos = new ChunkPos(player.getBlockPos());
         var bastion = getBastionStructure(world);
         if (bastion.isEmpty()) return false;
 
-        // Use structure start to check if valid structure at player position
-        StructureStart start = world.getStructureAccessor().getStructureAt(
-            playerPos, bastion.get().value());
-        return start != null && start.hasChildren();
+        // Check 3x3 chunks around the player for bastion structure references
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dz = -1; dz <= 1; dz++) {
+                var chunk = world.getChunk(chunkPos.x + dx, chunkPos.z + dz);
+                var refs = chunk.getStructureReferences(bastion.get().value());
+                if (!refs.isEmpty()) return true;
+            }
+        }
+        return false;
     }
 
     public static Optional<BlockPos> findRandomBastionBlockPos(ServerWorld world, BlockPos near) {
         var bastion = getBastionStructure(world);
         if (bastion.isEmpty()) return Optional.empty();
 
-        // Try nearby chunks to find the bastion
         int searchRadius = 4;
         ChunkPos center = new ChunkPos(near);
+
         for (int dx = -searchRadius; dx <= searchRadius; dx++) {
             for (int dz = -searchRadius; dz <= searchRadius; dz++) {
                 ChunkPos cp = new ChunkPos(center.x + dx, center.z + dz);
-                BlockPos chunkBPos = new BlockPos(cp.getStartX(), near.getY(), cp.getStartZ());
-                StructureStart start = world.getStructureAccessor().getStructureAt(
-                    chunkBPos, bastion.get().value());
-                if (start != null && start.hasChildren()) {
-                    return Optional.of(start.getBoundingBox().getCenter());
+                var chunk = world.getChunk(cp.x, cp.z);
+                var refs = chunk.getStructureReferences(bastion.get().value());
+                if (!refs.isEmpty()) {
+                    return Optional.of(new BlockPos(cp.getCenterX(), 64, cp.getCenterZ()));
                 }
             }
         }
