@@ -28,7 +28,7 @@ public final class EntityKillSourceHelper {
     public static boolean isFakePlayer(PlayerEntity player) {
         if (player == null) return false;
         if (player instanceof ServerPlayerEntity sp) {
-            return true; // fake player check - server side
+            return sp.networkHandler == null;
         }
         return false;
     }

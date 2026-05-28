@@ -62,9 +62,11 @@ public class ModConfig {
     private ModConfig() {}
 
     public static ModConfig load() {
+        ModConfig defaults = new ModConfig();
         if (Files.exists(CONFIG_PATH)) {
             try (FileReader reader = new FileReader(CONFIG_PATH.toFile())) {
-                return GSON.fromJson(reader, ModConfig.class);
+                ModConfig loaded = GSON.fromJson(reader, ModConfig.class);
+            return mergeWithDefaults(loaded, defaults);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -84,4 +86,5 @@ public class ModConfig {
             e.printStackTrace();
         }
     }
+private static ModConfig mergeWithDefaults(ModConfig loaded, ModConfig defaults) {        if (loaded == null) return defaults;        if (loaded.allowedDimensions == null) loaded.allowedDimensions = defaults.allowedDimensions;        if (loaded.preferredSpawnBlocks == null) loaded.preferredSpawnBlocks = defaults.preferredSpawnBlocks;        return loaded;    }
 }

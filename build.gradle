@@ -18,7 +18,7 @@ loom {
 	splitEnvironmentSourceSets()
 
 	mods {
-		"modid" {
+		"bastion_brute_reborn" {
 			sourceSet sourceSets.main
 			sourceSet sourceSets.client
 		}
