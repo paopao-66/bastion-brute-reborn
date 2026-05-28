@@ -27,17 +27,12 @@ public class BastionBruteRespawnHandler {
 
         for (ServerWorld world : server.getWorlds()) {
             if (!DimensionConfigHelper.isAllowedDimension(world, config.allowedDimensions)) continue;
-
             if (!config.peacefulModeSpawning && world.getDifficulty().getId() == 0) continue;
 
-            List<ServerPlayerEntity> players = world.getPlayers();
-            for (ServerPlayerEntity player : players) {
+            for (ServerPlayerEntity player : world.getPlayers()) {
                 if (player.isCreative() || player.isSpectator()) continue;
-
-                if (config.requirePlayerInsideStructure) {
-                    if (!BastionStructureHelper.isPlayerInsideBastion(player, world)) continue;
-                }
-
+                if (config.requirePlayerInsideStructure
+                    && !BastionStructureHelper.isPlayerInsideBastion(player, world)) continue;
                 if (exceedsBruteLimit(world, player, config)) continue;
 
                 Optional<BlockPos> bastionPos = BastionStructureHelper.findRandomBastionBlockPos(world, player.getBlockPos());
@@ -49,7 +44,11 @@ public class BastionBruteRespawnHandler {
                 PiglinBruteEntity brute = new PiglinBruteEntity(
                     net.minecraft.entity.EntityType.PIGLIN_BRUTE, world
                 );
-                brute.setPosition(spawnPos.get().getX() + 0.5, spawnPos.get().getY(), spawnPos.get().getZ() + 0.5);
+                brute.setPosition(
+                    spawnPos.get().getX() + 0.5,
+                    spawnPos.get().getY(),
+                    spawnPos.get().getZ() + 0.5
+                );
                 world.spawnEntity(brute);
                 return;
             }
@@ -57,26 +56,11 @@ public class BastionBruteRespawnHandler {
     }
 
     private boolean exceedsBruteLimit(ServerWorld world, ServerPlayerEntity player, ModConfig config) {
-        BlockPos playerPos = player.getBlockPos();
-        Box area = new Box(playerPos).expand(config.nearbyPlayerCheckRadius);
+        Box area = new Box(player.getBlockPos()).expand(config.nearbyPlayerCheckRadius);
         List<PiglinBruteEntity> brutes = world.getEntitiesByClass(
-            PiglinBruteEntity.class,
-            area,
-            e -> true
+            PiglinBruteEntity.class, area, e -> true
         );
-
-        int totalNear = brutes.size();
-        if (totalNear >= config.maxBrutesNearPlayer) return true;
-
-        if (config.requirePlayerInsideStructure) {
-            int bastionCount = 0;
-            for (PiglinBruteEntity brute : brutes) {
-                if (BastionStructureHelper.isPlayerInsideBastion(player, world)) {
-                    bastionCount++;
-                    if (bastionCount >= config.maxBrutesPerBastion) return true;
-                }
-            }
-        }
-        return false;
+        return brutes.size() >= config.maxBrutesNearPlayer
+            || brutes.size() >= config.maxBrutesPerBastion;
     }
 }
