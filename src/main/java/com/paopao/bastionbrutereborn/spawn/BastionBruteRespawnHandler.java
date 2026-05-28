@@ -1,0 +1,82 @@
+package com.paopao.bastionbrutereborn.spawn;
+
+import com.paopao.bastionbrutereborn.config.ModConfig;
+import com.paopao.bastionbrutereborn.util.DimensionConfigHelper;
+import net.minecraft.entity.mob.PiglinBruteEntity;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.world.ServerWorld;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Box;
+
+import java.util.List;
+import java.util.Optional;
+
+public class BastionBruteRespawnHandler {
+
+    private int tickCounter = 0;
+
+    public void tick(MinecraftServer server) {
+        ModConfig config = ModConfig.INSTANCE;
+        if (!config.enablePiglinBruteRespawn) return;
+
+        tickCounter++;
+        int intervalTicks = config.spawnIntervalSeconds * 20;
+        if (tickCounter < intervalTicks) return;
+        tickCounter = 0;
+
+        for (ServerWorld world : server.getWorlds()) {
+            if (!DimensionConfigHelper.isAllowedDimension(world, config.allowedDimensions)) continue;
+
+            if (!config.peacefulModeSpawning && world.getDifficulty().getId() == 0) continue;
+
+            List<ServerPlayerEntity> players = world.getPlayers();
+            for (ServerPlayerEntity player : players) {
+                if (player.isCreative() || player.isSpectator()) continue;
+
+                if (config.requirePlayerInsideStructure) {
+                    if (!BastionStructureHelper.isPlayerInsideBastion(player, world)) continue;
+                }
+
+                if (exceedsBruteLimit(world, player, config)) continue;
+
+                Optional<BlockPos> bastionPos = BastionStructureHelper.findRandomBastionBlockPos(world, player.getBlockPos());
+                if (bastionPos.isEmpty()) continue;
+
+                Optional<BlockPos> spawnPos = BruteSpawnPositionFinder.findSpawnPosition(world, bastionPos.get());
+                if (spawnPos.isEmpty()) continue;
+
+                PiglinBruteEntity brute = new PiglinBruteEntity(
+                    net.minecraft.entity.EntityType.PIGLIN_BRUTE, world
+                );
+                brute.setPosition(spawnPos.get().getX() + 0.5, spawnPos.get().getY(), spawnPos.get().getZ() + 0.5);
+                world.spawnEntity(brute);
+                return;
+            }
+        }
+    }
+
+    private boolean exceedsBruteLimit(ServerWorld world, ServerPlayerEntity player, ModConfig config) {
+        BlockPos playerPos = player.getBlockPos();
+        Box area = new Box(playerPos).expand(config.nearbyPlayerCheckRadius);
+        List<PiglinBruteEntity> brutes = world.getEntitiesByClass(
+            PiglinBruteEntity.class,
+            area,
+            e -> true
+        );
+
+        int totalNear = brutes.size();
+        if (totalNear >= config.maxBrutesNearPlayer) return true;
+
+        if (config.requirePlayerInsideStructure) {
+            int bastionCount = 0;
+            for (PiglinBruteEntity brute : brutes) {
+                if (BastionStructureHelper.isPlayerInsideBastion(player, world)) {
+                    bastionCount++;
+                    if (bastionCount >= config.maxBrutesPerBastion) return true;
+                }
+            }
+        }
+        return false;
+    }
+}

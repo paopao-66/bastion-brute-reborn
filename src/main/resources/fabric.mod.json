@@ -1,0 +1,23 @@
+{
+    "schemaVersion": 1,
+    "id": "bastion_brute_reborn",
+    "version": "1.0.0",
+    "name": "Bastion Brute Reborn",
+    "description": "Makes bastion remnants a high-risk, high-reward area by adding ancient debris drops and piglin brute respawning.",
+    "authors": ["paopao"],
+    "contact": {},
+    "license": "MIT",
+    "icon": "assets/bastion_brute_reborn/icon.png",
+    "environment": "*",
+    "entrypoints": {
+        "main": [
+            "com.paopao.bastionbrutereborn.BastionBruteReborn"
+        ]
+    },
+    "depends": {
+        "fabricloader": ">=0.19.2",
+        "minecraft": "~1.21.10",
+        "java": ">=21",
+        "fabric-api": "*"
+    }
+}
