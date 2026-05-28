@@ -1,5 +1,6 @@
 package com.paopao.bastionbrutereborn.spawn;
 
+import com.paopao.bastionbrutereborn.BastionBruteReborn;
 import com.paopao.bastionbrutereborn.config.ModConfig;
 import net.minecraft.block.BlockState;
 import net.minecraft.registry.Registries;
@@ -7,7 +8,6 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
-import net.minecraft.world.Heightmap;
 
 import java.util.Optional;
 
@@ -18,34 +18,44 @@ public final class BruteSpawnPositionFinder {
     public static Optional<BlockPos> findSpawnPosition(ServerWorld world, BlockPos near) {
         ModConfig config = ModConfig.INSTANCE;
 
-        for (int attempt = 0; attempt < config.maxSpawnPositionAttempts; attempt++) {
-            int offsetX = world.random.nextInt(16) - 8;
-            int offsetZ = world.random.nextInt(16) - 8;
-            int baseX = near.getX() + offsetX;
-            int baseZ = near.getZ() + offsetZ;
+        // Scan in expanding squares around bastion center
+        // Step=4 covers every 4 blocks for thorough but fast coverage
+        for (int ring = 0; ring <= 8; ring++) {
+            int step = 4;
+            int limit = ring * step;
+            
+            // Check every point on the perimeter of this square
+            for (int dx = -limit; dx <= limit; dx += (ring == 0 ? 1 : step)) {
+                for (int dz = -limit; dz <= limit; dz += (ring == 0 ? 1 : step)) {
+                    // For rings > 0, only check perimeter (skip interior)
+                    if (ring > 0 && Math.abs(dx) < limit && Math.abs(dz) < limit) continue;
 
-            // Find the ground from bottom up instead of top down
-            // Start from Y=100 (below ceiling in Nether), search down to Y=20
-            for (int y = near.getY() + 30; y > world.getBottomY() + 10; y--) {
-                BlockPos checkPos = new BlockPos(baseX, y, baseZ);
-                if (isGroundPosition(world, checkPos)) {
-                    // checkPos is the air block, below it is the ground block
-                    BlockPos groundBlock = checkPos.down();
-                    BlockState groundState = world.getBlockState(groundBlock);
+                    int bx = near.getX() + dx;
+                    int bz = near.getZ() + dz;
 
-                    if (isValidSpawnPosition(world, groundBlock)) {
-                        if (config.preferBastionBlocks) {
-                            Identifier blockId = Registries.BLOCK.getId(groundState.getBlock());
-                            if (config.preferredSpawnBlocks.contains(blockId.toString())) {
-                                return Optional.of(checkPos);
+                    // Search from ground-level heights down
+                    // Bastion platforms are typically Y=50-80, lava floor Y=31-36
+                    for (int y = 85; y > 32; y--) {
+                        BlockPos cp = new BlockPos(bx, y, bz);
+                        if (isGroundPosition(world, cp)) {
+                            if (isValidSpawnPosition(world, cp.down())) {
+                                BlockState gs = world.getBlockState(cp.down());
+                                if (config.preferBastionBlocks) {
+                                    Identifier blockId = Registries.BLOCK.getId(gs.getBlock());
+                                    if (config.preferredSpawnBlocks.contains(blockId.toString())) {
+                                        return Optional.of(cp);
+                                    }
+                                }
+                                return Optional.of(cp);
                             }
+                            break; // found a ground block but not valid, check next column
                         }
-                        return Optional.of(checkPos);
                     }
-                    break;
                 }
             }
         }
+
+        BastionBruteReborn.LOGGER.info("SpawnFinder: all searches failed");
         return Optional.empty();
     }
 
@@ -64,12 +74,9 @@ public final class BruteSpawnPositionFinder {
         if (stateBelow.isAir()) return false;
         if (!stateAt.isAir()) return false;
         if (!stateAbove.isAir()) return false;
-
         if (!world.getBlockState(spawnPos).getFluidState().isEmpty()) return false;
 
         Box box = new Box(spawnPos).expand(0.4);
-        if (!world.isSpaceEmpty(box)) return false;
-
-        return true;
+        return world.isSpaceEmpty(box);
     }
 }

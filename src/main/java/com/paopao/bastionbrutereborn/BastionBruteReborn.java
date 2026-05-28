@@ -26,7 +26,7 @@ public class BastionBruteReborn implements ModInitializer {
 
         ServerLivingEntityEvents.AFTER_DEATH.register(
             (LivingEntity entity, DamageSource source) -> {
-                PiglinBruteAncientDebrisDropHandler.onEntityDeath(entity, entity.getEntityWorld());
+                PiglinBruteAncientDebrisDropHandler.onEntityDeath(entity, source);
             }
         );
 

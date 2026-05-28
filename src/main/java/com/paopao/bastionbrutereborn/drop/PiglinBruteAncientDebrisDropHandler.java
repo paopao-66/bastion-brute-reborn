@@ -19,10 +19,10 @@ import net.minecraft.world.World;
 
 public class PiglinBruteAncientDebrisDropHandler {
 
-    public static void onEntityDeath(LivingEntity entity, World world) {
+    public static void onEntityDeath(LivingEntity entity, DamageSource source) {
         ModConfig config = ModConfig.INSTANCE;
 
-        BastionBruteReborn.LOGGER.info("DropHandler: entity={} world={}", entity, world);
+        World w = entity.getEntityWorld(); BastionBruteReborn.LOGGER.info("DropHandler: entity={} world={}", entity, w);
 
         if (!config.enableAncientDebrisDrop) {
             BastionBruteReborn.LOGGER.info("DropHandler: disabled by config");
@@ -32,7 +32,7 @@ public class PiglinBruteAncientDebrisDropHandler {
             BastionBruteReborn.LOGGER.info("DropHandler: not a piglin brute: {}", entity.getType());
             return;
         }
-        if (!(world instanceof ServerWorld serverWorld)) {
+        World world = entity.getEntityWorld(); if (!(world instanceof ServerWorld serverWorld)) {
             BastionBruteReborn.LOGGER.info("DropHandler: not server world");
             return;
         }
@@ -44,17 +44,17 @@ public class PiglinBruteAncientDebrisDropHandler {
             }
         }
 
-        DamageSource lastDamage = entity.getRecentDamageSource();
-        BastionBruteReborn.LOGGER.info("DropHandler: lastDamage={}", lastDamage);
+        // source is provided by the event directly
+        BastionBruteReborn.LOGGER.info("DropHandler: source={}", source);
 
-        if (lastDamage == null) return;
+        if (source == null) return;
 
-        if (!isValidKillSource(entity, lastDamage, config)) {
+        if (!isValidKillSource(entity, source, config)) {
             BastionBruteReborn.LOGGER.info("DropHandler: invalid kill source");
             return;
         }
 
-        int lootingLevel = getLootingLevel(lastDamage, serverWorld);
+        int lootingLevel = getLootingLevel(source, serverWorld);
         int effectiveLooting = Math.min(lootingLevel, config.maxLootingLevel);
         double chance = config.baseChance + effectiveLooting * config.lootingBonusPerLevel;
 

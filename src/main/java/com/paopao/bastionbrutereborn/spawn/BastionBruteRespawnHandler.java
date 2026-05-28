@@ -1,5 +1,6 @@
 package com.paopao.bastionbrutereborn.spawn;
 
+import com.paopao.bastionbrutereborn.BastionBruteReborn;
 import com.paopao.bastionbrutereborn.config.ModConfig;
 import com.paopao.bastionbrutereborn.util.DimensionConfigHelper;
 import net.minecraft.entity.mob.PiglinBruteEntity;
@@ -50,6 +51,8 @@ public class BastionBruteRespawnHandler {
                     spawnPos.get().getZ() + 0.5
                 );
                 world.spawnEntity(brute);
+                BastionBruteReborn.LOGGER.info("Spawned piglin brute at {} {} {}",
+                    spawnPos.get().getX(), spawnPos.get().getY(), spawnPos.get().getZ());
                 return;
             }
         }
