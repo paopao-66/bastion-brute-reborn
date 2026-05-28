@@ -50,6 +50,8 @@ public class BastionBruteRespawnHandler {
                     spawnPos.get().getY(),
                     spawnPos.get().getZ() + 0.5
                 );
+                // Ensure full health initialization
+                brute.setHealth(brute.getMaxHealth());
                 world.spawnEntity(brute);
                 BastionBruteReborn.LOGGER.info("Spawned piglin brute at {} {} {}",
                     spawnPos.get().getX(), spawnPos.get().getY(), spawnPos.get().getZ());
