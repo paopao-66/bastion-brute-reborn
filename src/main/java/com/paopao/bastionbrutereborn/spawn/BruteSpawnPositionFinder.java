@@ -16,6 +16,7 @@ public final class BruteSpawnPositionFinder {
 
     public static Optional<BlockPos> findSpawnPosition(ServerWorld world, BlockPos near) {
         ModConfig config = ModConfig.INSTANCE;
+        BlockPos fallback = null;
 
         // Random sampling within bastion radius for performance and variety
         for (int attempt = 0; attempt < 200; attempt++) {
@@ -34,32 +35,38 @@ public final class BruteSpawnPositionFinder {
                         if (config.preferredSpawnBlocks.contains(blockId.toString())) {
                             return Optional.of(cp);
                         }
-                        continue; // found valid spot but not preferred block, keep looking
+                        // Save first valid spot as fallback
+                        if (fallback == null) {
+                            fallback = cp;
+                        }
+                    } else {
+                        return Optional.of(cp);
                     }
-                    return Optional.of(cp);
+                    break; // found ground in this column, move to next attempt
                 }
             }
         }
+
+        // Return any valid spot if preferred blocks not found
+        if (fallback != null) {
+            return Optional.of(fallback);
+        }
+
         return Optional.empty();
     }
 
     private static boolean isValidSpawnPosition(ServerWorld world, BlockPos pos) {
-        // Feet position: must be air, no fluid
         if (!world.getBlockState(pos).isAir()) return false;
         if (!world.getBlockState(pos).getFluidState().isEmpty()) return false;
 
-        // Ground below: solid, no fluid
         BlockPos below = pos.down();
         BlockState stateBelow = world.getBlockState(below);
         if (stateBelow.isAir()) return false;
         if (!stateBelow.getFluidState().isEmpty()) return false;
 
-        // Body space: brute is 1.95 blocks tall
         if (!world.getBlockState(pos.up()).isAir()) return false;
-        // Head space: allow transparent blocks (not just strict air)
         if (world.getBlockState(pos.up(2)).isSolidBlock(world, pos.up(2))) return false;
 
-        // No collision with surroundings
         Box box = new Box(pos).expand(0.4);
         return world.isSpaceEmpty(box);
     }
