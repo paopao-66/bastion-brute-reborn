@@ -47,7 +47,10 @@ public class PiglinBruteAncientDebrisDropHandler {
         // source is provided by the event directly
         BastionBruteReborn.LOGGER.info("DropHandler: source={}", source);
 
-        if (source == null) return;
+        if (source == null) {
+            BastionBruteReborn.LOGGER.warn("DropHandler: source is null, skipping drop");
+            return;
+        }
 
         if (!isValidKillSource(entity, source, config)) {
             BastionBruteReborn.LOGGER.info("DropHandler: invalid kill source");

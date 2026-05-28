@@ -2,7 +2,9 @@ package com.paopao.bastionbrutereborn.spawn;
 
 import com.paopao.bastionbrutereborn.config.ModConfig;
 import net.minecraft.block.BlockState;
+import net.minecraft.registry.Registries;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 
@@ -13,18 +15,28 @@ public final class BruteSpawnPositionFinder {
     private BruteSpawnPositionFinder() {}
 
     public static Optional<BlockPos> findSpawnPosition(ServerWorld world, BlockPos near) {
-        // Scan in fine grid around bastion center (step=2, radius=48)
-        // Covers all bastion platforms at any height in the Nether
-        for (int dx = -48; dx <= 48; dx += 2) {
-            for (int dz = -48; dz <= 48; dz += 2) {
-                int bx = near.getX() + dx;
-                int bz = near.getZ() + dz;
+        ModConfig config = ModConfig.INSTANCE;
 
-                for (int y = 120; y > 32; y--) {
-                    BlockPos cp = new BlockPos(bx, y, bz);
-                    if (isValidSpawnPosition(world, cp)) {
-                        return Optional.of(cp);
+        // Random sampling within bastion radius for performance and variety
+        for (int attempt = 0; attempt < 200; attempt++) {
+            int dx = world.random.nextInt(80) - 40;
+            int dz = world.random.nextInt(80) - 40;
+            int bx = near.getX() + dx;
+            int bz = near.getZ() + dz;
+
+            for (int y = 120; y > 32; y--) {
+                BlockPos cp = new BlockPos(bx, y, bz);
+                if (isValidSpawnPosition(world, cp)) {
+                    // Prefer bastion blocks if configured
+                    if (config.preferBastionBlocks) {
+                        Identifier blockId = Registries.BLOCK.getId(
+                            world.getBlockState(cp.down()).getBlock());
+                        if (config.preferredSpawnBlocks.contains(blockId.toString())) {
+                            return Optional.of(cp);
+                        }
+                        continue; // found valid spot but not preferred block, keep looking
                     }
+                    return Optional.of(cp);
                 }
             }
         }
@@ -32,20 +44,22 @@ public final class BruteSpawnPositionFinder {
     }
 
     private static boolean isValidSpawnPosition(ServerWorld world, BlockPos pos) {
-        // Check: air at pos, solid non-fluid block below, 2 blocks of air above
+        // Feet position: must be air, no fluid
         if (!world.getBlockState(pos).isAir()) return false;
         if (!world.getBlockState(pos).getFluidState().isEmpty()) return false;
 
+        // Ground below: solid, no fluid
         BlockPos below = pos.down();
         BlockState stateBelow = world.getBlockState(below);
         if (stateBelow.isAir()) return false;
-        if (!stateBelow.getFluidState().isEmpty()) return false; // no lava floor
+        if (!stateBelow.getFluidState().isEmpty()) return false;
 
-        // Ensure 2 blocks of space above for the brute
+        // Body space: brute is 1.95 blocks tall
         if (!world.getBlockState(pos.up()).isAir()) return false;
-        if (!world.getBlockState(pos.up(2)).isAir()) return false;
+        // Head space: allow transparent blocks (not just strict air)
+        if (world.getBlockState(pos.up(2)).isSolidBlock(world, pos.up(2))) return false;
 
-        // Check no collision with nearby blocks
+        // No collision with surroundings
         Box box = new Box(pos).expand(0.4);
         return world.isSpaceEmpty(box);
     }

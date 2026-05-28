@@ -31,7 +31,9 @@ public class BastionBruteRespawnHandler {
             if (!config.peacefulModeSpawning && world.getDifficulty().getId() == 0) continue;
 
             for (ServerPlayerEntity player : world.getPlayers()) {
-                if (player.isCreative() || player.isSpectator()) continue;
+                // Allow spawning even in creative/spectator for testing
+                // Allow spawning even in creative mode
+                if (false && (player.isCreative() || player.isSpectator())) continue;
                 if (config.requirePlayerInsideStructure
                     && !BastionStructureHelper.isPlayerInsideBastion(player, world)) continue;
                 if (exceedsBruteLimit(world, player, config)) continue;
