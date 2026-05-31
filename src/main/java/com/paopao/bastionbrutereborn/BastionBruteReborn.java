@@ -20,7 +20,7 @@ public class BastionBruteReborn implements ModInitializer {
 
     @Override
     public void onInitialize() {
-        LOGGER.info("Initializing Bastion Brute Reborn...");
+        LOGGER.info("正在初始化 Bastion Brute Reborn...");
 
         ModConfig.INSTANCE.save();
 
@@ -34,6 +34,7 @@ public class BastionBruteReborn implements ModInitializer {
             server -> respawnHandler.tick(server)
         );
 
-        LOGGER.info("Bastion Brute Reborn initialized successfully.");
+        LOGGER.info("生成管理器已注册。");
+        LOGGER.info("Bastion Brute Reborn 初始化完成。");
     }
 }

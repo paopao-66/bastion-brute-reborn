@@ -22,30 +22,30 @@ public class PiglinBruteAncientDebrisDropHandler {
     public static void onEntityDeath(LivingEntity entity, DamageSource source) {
         ModConfig config = ModConfig.INSTANCE;
 
-        World w = entity.getEntityWorld(); BastionBruteReborn.LOGGER.info("DropHandler: entity={} world={}", entity, w);
+        World w = entity.getEntityWorld(); debug("DropHandler: entity={} world={}", entity, w);
 
         if (!config.enableAncientDebrisDrop) {
-            BastionBruteReborn.LOGGER.info("DropHandler: disabled by config");
+            debug("DropHandler: disabled by config");
             return;
         }
         if (!(entity instanceof PiglinBruteEntity)) {
-            BastionBruteReborn.LOGGER.info("DropHandler: not a piglin brute: {}", entity.getType());
+            debug("DropHandler: not a piglin brute: {}", entity.getType());
             return;
         }
         World world = entity.getEntityWorld(); if (!(world instanceof ServerWorld serverWorld)) {
-            BastionBruteReborn.LOGGER.info("DropHandler: not server world");
+            debug("DropHandler: not server world");
             return;
         }
 
         if (config.respectDoMobLoot) {
             if (!serverWorld.getGameRules().getBoolean(net.minecraft.world.GameRules.DO_MOB_LOOT)) {
-                BastionBruteReborn.LOGGER.info("DropHandler: doMobLoot is false");
+                debug("DropHandler: doMobLoot is false");
                 return;
             }
         }
 
         // source is provided by the event directly
-        BastionBruteReborn.LOGGER.info("DropHandler: source={}", source);
+        debug("DropHandler: source={}", source);
 
         if (source == null) {
             BastionBruteReborn.LOGGER.warn("DropHandler: source is null, skipping drop");
@@ -53,7 +53,7 @@ public class PiglinBruteAncientDebrisDropHandler {
         }
 
         if (!isValidKillSource(entity, source, config)) {
-            BastionBruteReborn.LOGGER.info("DropHandler: invalid kill source");
+            debug("DropHandler: invalid kill source");
             return;
         }
 
@@ -61,10 +61,10 @@ public class PiglinBruteAncientDebrisDropHandler {
         int effectiveLooting = Math.min(lootingLevel, config.maxLootingLevel);
         double chance = config.baseChance + effectiveLooting * config.lootingBonusPerLevel;
 
-        BastionBruteReborn.LOGGER.info("DropHandler: looting={} effective={} chance={}", lootingLevel, effectiveLooting, chance);
+        debug("DropHandler: looting={} effective={} chance={}", lootingLevel, effectiveLooting, chance);
 
         if (entity.getRandom().nextDouble() < chance) {
-            ItemStack stack = new ItemStack(Items.ANCIENT_DEBRIS, config.dropAmount);
+            ItemStack stack = new ItemStack(Items.ANCIENT_DEBRIS, 1);
             ItemEntity itemEntity = new ItemEntity(
                 serverWorld,
                 entity.getX(), entity.getY() + 0.5, entity.getZ(),
@@ -72,20 +72,21 @@ public class PiglinBruteAncientDebrisDropHandler {
             );
             itemEntity.setToDefaultPickupDelay();
             serverWorld.spawnEntity(itemEntity);
-            BastionBruteReborn.LOGGER.info("DropHandler: DROPPED ancient debris at {},{}", entity.getX(), entity.getZ());
+            debug("DropHandler: DROPPED 1 ancient debris at {},{}", entity.getX(), entity.getZ());
         } else {
-            BastionBruteReborn.LOGGER.info("DropHandler: roll failed (chance={})", chance);
+            debug("DropHandler: roll failed (chance={})", chance);
         }
     }
 
     private static boolean isValidKillSource(LivingEntity entity, DamageSource source, ModConfig config) {
         if (config.requirePlayerKill) {
+            if (!EntityKillSourceHelper.isPlayerKill(entity, source)) {
+                return false;
+            }
             if (source.getAttacker() instanceof PlayerEntity player) {
                 if (!config.allowFakePlayer && EntityKillSourceHelper.isFakePlayer(player)) return false;
-                return true;
             }
-            if (config.allowTamedWolfKill && EntityKillSourceHelper.isTamedWolfKill(source)) return true;
-            return false;
+            return true;
         }
         return true;
     }
@@ -100,5 +101,11 @@ public class PiglinBruteAncientDebrisDropHandler {
             }
         }
         return 0;
+    }
+
+    private static void debug(String format, Object... args) {
+        if (ModConfig.INSTANCE.enableDebugLog) {
+            BastionBruteReborn.LOGGER.info(format, args);
+        }
     }
 }

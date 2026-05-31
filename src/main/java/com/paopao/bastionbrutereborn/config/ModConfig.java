@@ -19,7 +19,7 @@ public class ModConfig {
 
     public static final ModConfig INSTANCE = load();
 
-    // Drop settings
+    // 掉落设置
     public boolean enableAncientDebrisDrop = true;
     public String dropTargetMob = "minecraft:piglin_brute";
     public String dropItem = "minecraft:ancient_debris";
@@ -29,11 +29,11 @@ public class ModConfig {
     public int dropAmount = 1;
     public boolean requirePlayerKill = true;
     public boolean allowFakePlayer = true;
-    public boolean allowTamedWolfKill = true;
+    public boolean allowTamedWolfKill = false;
     public boolean respectDoMobLoot = true;
     public boolean showDropMessage = false;
 
-    // Respawn settings
+    // 生成设置
     public boolean enablePiglinBruteRespawn = true;
     public String targetStructure = "minecraft:bastion_remnant";
     public String spawnTargetMob = "minecraft:piglin_brute";
@@ -55,9 +55,11 @@ public class ModConfig {
         "minecraft:chiseled_polished_blackstone",
         "minecraft:gilded_blackstone"
     );
-    public int maxSpawnPositionAttempts = 10;
+    public int maxSpawnPositionAttempts = 200;
     public boolean markSpawnedBrutes = false;
     public boolean showSpawnMessage = false;
+    public boolean enableDebugLog = true;
+    public boolean debugForceSpawnNearPlayer = false;
 
     private ModConfig() {}
 
