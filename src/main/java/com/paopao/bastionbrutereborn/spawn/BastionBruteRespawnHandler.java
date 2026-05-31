@@ -3,7 +3,10 @@ package com.paopao.bastionbrutereborn.spawn;
 import com.paopao.bastionbrutereborn.BastionBruteReborn;
 import com.paopao.bastionbrutereborn.config.ModConfig;
 import com.paopao.bastionbrutereborn.util.DimensionConfigHelper;
+import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.mob.PiglinBruteEntity;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
@@ -110,6 +113,7 @@ public class BastionBruteRespawnHandler {
         );
         brute.setPosition(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5);
         brute.setHealth(brute.getMaxHealth());
+        brute.equipStack(EquipmentSlot.MAINHAND, new ItemStack(Items.GOLDEN_AXE));
 
         boolean spawned = world.spawnEntity(brute);
         if (spawned) {

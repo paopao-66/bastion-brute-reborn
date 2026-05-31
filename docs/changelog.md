@@ -1,5 +1,8 @@
 # Changelog
 
+## [1.1.9] — 2026-05-31 — Piglin Brute weapon fix
+- Ensured respawned Piglin Brutes are equipped with a golden axe when spawned by the mod.
+
 ## [1.1.8] — 2026-05-31 — Piglin Brute respawn and drop fix
 - Fixed Piglin Brute spawn position collision checks so valid standing positions are not rejected by the floor block.
 - Kept respawn registration on server tick so it works on both dedicated servers and single-player integrated servers.

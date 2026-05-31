@@ -1,5 +1,9 @@
 # Test Log
 
+## 2026-05-31 — Piglin Brute weapon fix
+- Ran `.\gradlew.bat build`: passed.
+- Manual in-game check still required to visually confirm respawned Piglin Brutes hold the axe.
+
 ## 2026-05-31 — Piglin Brute respawn and drop fix
 - Ran `.\gradlew.bat compileJava`: passed.
 - Ran `.\gradlew.bat build`: passed.
