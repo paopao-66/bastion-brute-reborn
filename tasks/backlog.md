@@ -1,7 +1,4 @@
 # Backlog
 
-- Investigate Piglin Brute spawn logic.
-- Identify relevant Fabric mixins or spawn event hooks.
-- Confirm whether the bug appears in single-player integrated server only or also dedicated server.
-- Add reliable test steps for protected-range spawning behavior.
-- Fix the bug with minimal code changes.
+- Validate v1.2.0 in-game on integrated and dedicated servers after CI builds.
+- Consider whether respawned Piglin Brutes should be persistent.

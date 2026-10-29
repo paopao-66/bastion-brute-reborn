@@ -1,7 +1,6 @@
 package com.paopao.bastionbrutereborn.util;
 
 import net.minecraft.registry.RegistryKey;
-import net.minecraft.registry.RegistryKeys;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Identifier;
 

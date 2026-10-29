@@ -1,10 +1,10 @@
 # Context Summary
 
 ## Project
-Minecraft Fabric mod. The mod provides a protected range mechanic to prevent certain mobs from spawning.
+Bastion Brute Reborn 1.2.0 is a Minecraft 1.21.10 Fabric mod providing Piglin Brute respawning near bastion remnants and configurable Ancient Debris drops. Requires Java 21, Fabric Loader >= 0.19.2, and Fabric API.
 
 ## Current Known Issue
-Piglin Brutes still generate inside the configured protected range. The spawn-blocking logic is not correctly applying to Piglin Brutes specifically.
+No known issues currently identified. Compilation via CI and manual in-game verification are pending; runtime behavior has not yet been verified for 1.2.0.
 
 ## Main Workflow Risks
 - Broad repository scans waste tokens.

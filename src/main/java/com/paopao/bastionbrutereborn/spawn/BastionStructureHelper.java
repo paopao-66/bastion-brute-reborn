@@ -2,7 +2,7 @@ package com.paopao.bastionbrutereborn.spawn;
 
 import com.paopao.bastionbrutereborn.BastionBruteReborn;
 import com.paopao.bastionbrutereborn.config.ModConfig;
-import net.minecraft.entity.player.PlayerEntity;
+import com.paopao.bastionbrutereborn.util.DebugLog;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryKeys;
 import net.minecraft.registry.entry.RegistryEntry;
@@ -12,6 +12,7 @@ import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.Heightmap;
+import net.minecraft.world.chunk.ChunkStatus;
 import net.minecraft.world.gen.structure.Structure;
 
 import java.util.Optional;
@@ -25,39 +26,6 @@ public final class BastionStructureHelper {
         return registry.getOptional(
             RegistryKey.of(RegistryKeys.STRUCTURE, Identifier.ofVanilla("bastion_remnant"))
         );
-    }
-
-    /**
-     * 判断玩家附近 nearbyPlayerCheckRadius 范围内是否存在 Bastion Remnant 结构引用。
-     * 不需要玩家精确站在结构内部，只需要附近存在引用。
-     */
-    public static boolean isBastionNearPlayer(PlayerEntity player, ServerWorld world) {
-        if (player == null || world == null) return false;
-
-        var bastion = getBastionStructure(world);
-        if (bastion.isEmpty()) {
-            BastionBruteReborn.LOGGER.warn("未在注册表中找到堡垒结构");
-            return false;
-        }
-
-        ModConfig config = ModConfig.INSTANCE;
-        int radiusChunks = Math.max(4, config.nearbyPlayerCheckRadius / 16);
-        ChunkPos playerChunk = new ChunkPos(player.getBlockPos());
-
-        for (int dx = -radiusChunks; dx <= radiusChunks; dx++) {
-            for (int dz = -radiusChunks; dz <= radiusChunks; dz++) {
-                var chunk = world.getChunk(playerChunk.x + dx, playerChunk.z + dz);
-                var refs = chunk.getStructureReferences(bastion.get().value());
-                if (!refs.isEmpty()) {
-                    BastionBruteReborn.LOGGER.info(
-                        "玩家附近存在堡垒引用：区块 ({}, {})", playerChunk.x + dx, playerChunk.z + dz);
-                    return true;
-                }
-            }
-        }
-
-        BastionBruteReborn.LOGGER.info("玩家附近 {} 区块范围内未找到堡垒引用", radiusChunks * 2);
-        return false;
     }
 
     /**
@@ -80,11 +48,12 @@ public final class BastionStructureHelper {
         for (int dx = -radiusChunks; dx <= radiusChunks; dx++) {
             for (int dz = -radiusChunks; dz <= radiusChunks; dz++) {
                 ChunkPos cp = new ChunkPos(center.x + dx, center.z + dz);
-                var chunk = world.getChunk(cp.x, cp.z);
+                var chunk = world.getChunk(cp.x, cp.z, ChunkStatus.FULL, false);
+                if (chunk == null) continue;
                 var refs = chunk.getStructureReferences(bastion.get().value());
                 if (refs.isEmpty()) continue;
 
-                BastionBruteReborn.LOGGER.info("找到堡垒引用区块：({}, {})", cp.x, cp.z);
+                DebugLog.log("找到堡垒引用区块：({}, {})", cp.x, cp.z);
 
                 // 尝试获取结构起点和包围盒
                 StructureStart start = chunk.getStructureStarts().get(bastion.get().value());
@@ -94,30 +63,30 @@ public final class BastionStructureHelper {
                         int centerX = (box.getMinX() + box.getMaxX()) / 2;
                         int centerZ = (box.getMinZ() + box.getMaxZ()) / 2;
                         int centerY = box.getMinY() + (box.getBlockCountY() / 2);
-                        BastionBruteReborn.LOGGER.info(
+                        DebugLog.log(
                             "使用包围盒中心作为候选点：({}, {}, {})（包围盒 Y: {}->{}）",
                             centerX, centerY, centerZ, box.getMinY(), box.getMaxY());
                         return Optional.of(new BlockPos(centerX, centerY, centerZ));
                     }
-                    BastionBruteReborn.LOGGER.info("获取到 StructureStart 但包围盒为空");
+                    DebugLog.log("获取到 StructureStart 但包围盒为空");
                 } else {
-                    BastionBruteReborn.LOGGER.info("区块 ({}, {}) 有堡垒引用但无 StructureStart", cp.x, cp.z);
+                    DebugLog.log("区块 ({}, {}) 有堡垒引用但无 StructureStart", cp.x, cp.z);
                 }
 
                 // 没有 bounding box：使用 heightmap 查找地表高度
                 int cx = cp.getCenterX();
                 int cz = cp.getCenterZ();
-                int topY = world.getTopY(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, cx, cz);
+                int topY = chunk.sampleHeightmap(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, cx & 15, cz & 15) + 1;
                 if (topY <= world.getBottomY()) {
                     topY = 64; // 极端回退
-                    BastionBruteReborn.LOGGER.info("heightmap 无效，使用 Y=64 作为回退");
+                    DebugLog.log("heightmap 无效，使用 Y=64 作为回退");
                 }
-                BastionBruteReborn.LOGGER.info("使用 heightmap 候选点：({}, {}, {})", cx, topY, cz);
+                DebugLog.log("使用 heightmap 候选点：({}, {}, {})", cx, topY, cz);
                 return Optional.of(new BlockPos(cx, topY, cz));
             }
         }
 
-        BastionBruteReborn.LOGGER.info("在 {} 周围 {} 个区块内未找到任何堡垒引用", near, radiusChunks * 2);
+        DebugLog.log("在 {} 周围 {} 个区块内未找到任何堡垒引用", near, radiusChunks * 2);
         return Optional.empty();
     }
 }

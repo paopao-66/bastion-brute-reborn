@@ -36,7 +36,7 @@ public final class EntityKillSourceHelper {
     public static boolean isTamedWolfKill(DamageSource source) {
         if (source == null) return false;
         if (source.getAttacker() instanceof WolfEntity wolf) {
-            return wolf.isTamed();
+            return wolf.isTamed() && wolf.getOwner() instanceof PlayerEntity;
         }
         return false;
     }

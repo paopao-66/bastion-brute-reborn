@@ -1,6 +1,5 @@
 package com.paopao.bastionbrutereborn;
 
-import com.paopao.bastionbrutereborn.config.ModConfig;
 import com.paopao.bastionbrutereborn.drop.PiglinBruteAncientDebrisDropHandler;
 import com.paopao.bastionbrutereborn.spawn.BastionBruteRespawnHandler;
 import net.fabricmc.api.ModInitializer;
@@ -21,8 +20,6 @@ public class BastionBruteReborn implements ModInitializer {
     @Override
     public void onInitialize() {
         LOGGER.info("正在初始化 Bastion Brute Reborn...");
-
-        ModConfig.INSTANCE.save();
 
         ServerLivingEntityEvents.AFTER_DEATH.register(
             (LivingEntity entity, DamageSource source) -> {
